@@ -153,6 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
     
   }
   /* Se prueba en POSTMAN asi:
+  
     {
     "nombre": "Nombre",
     "comportamiento": "bueno",
