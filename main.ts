@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId } from "mongodb";
 import type { NinoModel, LugarModel } from "./types.ts";
-
+import { fromModelToNino, fromModelToLugar } from "./utils.ts";
 
 const MONGO_URL = Deno.env.get("MONGO_URL");
 if (!MONGO_URL) {
@@ -42,35 +42,38 @@ const handler = async (req: Request): Promise<Response> => {
   if (method === "GET") {
     if (path === "/ninos/buenos") {
       const buenos = await ninosCollection.find({ comportamiento: "bueno" }).toArray();
-      return new Response(JSON.stringify(buenos));
+      const response = await Promise.all(buenos.map(fromModelToNino));
+      return new Response(JSON.stringify(response));
     } else if (path === "/ninos/malos") {
       const malos = await ninosCollection.find({ comportamiento: "malo" }).toArray();
-      return new Response(JSON.stringify(malos));
+      const response = await Promise.all(malos.map(fromModelToNino));
+      return new Response(JSON.stringify(response));
     } else if (path === "/entregas") {
       const ubicaciones = await ubicacionesCollection
         .find()
-        .sort({ ninosBuenos: -1 })
+        .sort({ numNinosBuenos: -1 })
         .toArray();
-      return new Response(JSON.stringify(ubicaciones));
+      const response = ubicaciones.map(fromModelToLugar);
+      return new Response(JSON.stringify(response));
     } else if (path === "/ruta") {
       const ubicaciones = await ubicacionesCollection
         .find()
-        .sort({ ninosBuenos: -1 })
+        .sort({ numNinosBuenos: -1 })
         .toArray();
 
       let distanciaTotal = 0;
       for (let i = 0; i < ubicaciones.length - 1; i++) {
-        const [lat1, lon1] = ubicaciones[i].coordenadas.split(",").map(Number);
-        const [lat2, lon2] = ubicaciones[i + 1].coordenadas.split(",").map(Number);
+        const { lat: lat1, log: lon1 } = ubicaciones[i].coordenadas;
+        const { lat: lat2, log: lon2 } = ubicaciones[i + 1].coordenadas;
         distanciaTotal += haversine(lat1, lon1, lat2, lon2);
       }
 
       return new Response(JSON.stringify({ distanciaTotal }));
     }
   } else if (method === "POST") {
-    if (path === "/ubicacion") {
+    if (path === "/ubicacion") { // esta correcto
       const ubicacion = await req.json();
-      if (!ubicacion.nombre || !validarCoordenadas(ubicacion.coordenadas)) {
+      if (!ubicacion.nombre || !ubicacion.coordenadas) {
         return new Response("Bad request", { status: 400 });
       }
 
@@ -84,13 +87,13 @@ const handler = async (req: Request): Promise<Response> => {
       await ubicacionesCollection.insertOne({
         nombre: ubicacion.nombre,
         coordenadas: ubicacion.coordenadas,
-        ninosBuenos: 0,
+        numNinosBuenos: 0,
       });
 
       return new Response("Ubicación creada", { status: 201 });
     } else if (path === "/ninos") {
       const nino = await req.json();
-      if (!nino.nombre || !["bueno", "malo"].includes(nino.comportamiento) || !nino.ubicacion) {
+      if (!nino.nombre || !["bueno", "malo"].includes(nino.comportamiento) ) {
         return new Response("Bad request", { status: 400 });
       }
 
@@ -108,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (nino.comportamiento === "bueno") {
         await ubicacionesCollection.updateOne(
           { _id: new ObjectId(nino.ubicacion) },
-          { $inc: { ninosBuenos: 1 } }
+          { $inc: { numNinosBuenos: 1 } }
         );
       }
 
