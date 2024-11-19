@@ -2,6 +2,7 @@ import {ObjectId, type OptionalId} from "mongodb"
 
 export type Comportamiento = "bueno" | "malo";
 export type Coordenadas = {lat:number, log:number}
+
 export type NinoModel = OptionalId <{
     nombre: string,
     comportamiento: Comportamiento,
@@ -15,7 +16,7 @@ export type LugarModel = OptionalId <{
 
 export type Nino = {
     id: string,
-    nombre: string,
+    nombre: string
     comportamiento: Comportamiento,
     ubicacion: ObjectId
 }

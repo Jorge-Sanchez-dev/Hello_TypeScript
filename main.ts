@@ -93,30 +93,38 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response("Ubicación creada", { status: 201 });
     } else if (path === "/ninos") {
       const nino = await req.json();
-      if (!nino.nombre || !["bueno", "malo"].includes(nino.comportamiento) ) {
+      
+      if (!nino.nombre || !nino.comportamiento || !nino.ubicacion) {
         return new Response("Bad request", { status: 400 });
       }
-
-      const ubicacion = await ubicacionesCollection.findOne({ _id: new ObjectId(nino.ubicacion) });
-      if (!ubicacion) {
-        return new Response("Ubicación no encontrada", { status: 404 });
+    
+      if (!['bueno', 'malo'].includes(nino.comportamiento)) {
+        return new Response("Comportamiento inválido", { status: 400 });
       }
-
+    
       const ninoExistente = await ninosCollection.findOne({ nombre: nino.nombre });
       if (ninoExistente) {
-        return new Response("Niño ya existe", { status: 409 });
+        return new Response("El nombre del niño ya existe", { status: 409 });
       }
-
-      await ninosCollection.insertOne(nino);
-      if (nino.comportamiento === "bueno") {
+    
+      const nuevoNino: NinoModel = {
+        nombre: nino.nombre,
+        comportamiento: nino.comportamiento,
+        ubicacion: new ObjectId(nino.ubicacion),
+      };
+      
+      await ninosCollection.insertOne(nuevoNino);
+    
+      if (nino.comportamiento === 'bueno') {
         await ubicacionesCollection.updateOne(
           { _id: new ObjectId(nino.ubicacion) },
           { $inc: { numNinosBuenos: 1 } }
         );
       }
-
-      return new Response("Niño agregado", { status: 201 });
+    
+      return new Response("Niño creado", { status: 201 });
     }
+    
   }
 
   return new Response("Endpoint not found", { status: 404 });
