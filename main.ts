@@ -18,6 +18,9 @@ const haversine = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Radio de la Tierra en km
   const toRad = (deg) => (deg * Math.PI) / 180; // Conversión a radianes
 
+  // kpsdfnosnd
+
+  
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const lat1Rad = toRad(lat1);
