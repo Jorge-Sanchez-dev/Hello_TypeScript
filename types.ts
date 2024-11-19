@@ -1,18 +1,17 @@
-import { ObjectId} from "mongodb";
+import { ObjectId, type OptionalId} from "mongodb";
 
-//Tipo Comportamiento
 export type Comportamiento = 'bueno' | 'malo';
 
-//Ninio
-export type Ninio = {
+//Ninyo
+export type NinyoModel = OptionalId<{
   name: string; 
   comportamiento: Comportamiento;
   ubicacion: ObjectId;
-};
+}>;
 
 //Lugar
-export type Lugar = {
+export type Lugar = OptionalId<{
   nombre: string; 
-  coordenadas: { lat: number; lng: number };
+  coordenadas: { lat: number; log: number };
   numNiniosBuenos: number;
-};
+}>;
