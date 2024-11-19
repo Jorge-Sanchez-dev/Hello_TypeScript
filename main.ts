@@ -91,6 +91,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       return new Response("Ubicación creada", { status: 201 });
+
+    /* Se prueba en POSTMAN asi:
+    {
+      "nombre": "Parque Central",
+      "coordenadas": { "lat": 401123,"log": -74123},
+      "numNinosBuenos": 0
+    }
+    */
     } else if (path === "/ninos") {
       const nino = await req.json();
       
@@ -126,6 +134,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
   }
+  /* Se prueba en POSTMAN asi:
+    {
+    "nombre": "Nombre",
+    "comportamiento": "bueno",
+    "ubicacion": "identidicador"
+    }
+  */
 
   return new Response("Endpoint not found", { status: 404 });
 };
