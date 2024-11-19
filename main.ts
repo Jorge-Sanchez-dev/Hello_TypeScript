@@ -16,7 +16,7 @@ const db = client.db("Nebrija");
 const ubicacionesCollection = db.collection<LugarModel>("ubicaciones");
 const ninosCollection = db.collection<NinoModel>("ninos");
 
-// Haversine Function
+// Haversine Funcion
 const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371; // Radio de la Tierra en km
   const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -60,18 +60,36 @@ const handler = async (req: Request): Promise<Response> => {
         .find()
         .sort({ numNinosBuenos: -1 })
         .toArray();
-
+  
       let distanciaTotal = 0;
+      
+      const distancias = [];
+    
       for (let i = 0; i < ubicaciones.length - 1; i++) {
         const { lat: lat1, log: lon1 } = ubicaciones[i].coordenadas;
         const { lat: lat2, log: lon2 } = ubicaciones[i + 1].coordenadas;
-        distanciaTotal += haversine(lat1, lon1, lat2, lon2);
-      }
+    
+        const distancia = haversine(lat1, lon1, lat2, lon2);
 
-      return new Response(JSON.stringify({ distanciaTotal }));
+        distanciaTotal += distancia;
+    
+        distancias.push({
+          desde: ubicaciones[i].nombre,
+          hasta: ubicaciones[i + 1].nombre,
+          distancia: distancia, 
+        });
+      }
+    
+      const resultado = {
+        distancias,
+        distanciaTotal,
+      };
+    
+      return new Response(JSON.stringify(resultado));
     }
+    
   } else if (method === "POST") {
-    if (path === "/ubicacion") { // esta correcto
+    if (path === "/ubicacion") {
       const ubicacion = await req.json();
       if (!ubicacion.nombre || !ubicacion.coordenadas) {
         return new Response("Bad request", { status: 400 });
